@@ -6,7 +6,7 @@ import "./detail.css"
 
 const Detail = () => {
 
-  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, changeBlock } = useChatStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, changeBlock, resetChat } = useChatStore();
   const { currentUser } = useUserStore();
 
   const handleBlock = async () => {
@@ -23,7 +23,10 @@ const Detail = () => {
       console.log(error);
     }
   };
-
+  const handleLogout = () => {
+    auth.signOut();
+    resetChat()
+  };
 
   return (
     <div className="detail">
@@ -96,7 +99,7 @@ const Detail = () => {
               ? "User Blocked"
               : "Block User"}
         </button>
-        <button className="logout" onClick={() => auth.signOut()}>Logout</button>
+        <button className="logout" onClick={handleLogout}>Logout</button>
       </div>
     </div>
   )

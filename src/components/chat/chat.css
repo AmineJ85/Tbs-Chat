@@ -70,6 +70,7 @@
       max-width: 70%;
       display: flex;
       gap: 20px;
+      padding: 10px;
 
       &.own{
         align-self: flex-end;
@@ -92,7 +93,7 @@
       .texts{
         flex: 1;
         display: flex;
-        flex-direction: column;
+        flex-direction: column; 
         gap: 5px;
         
         img{
@@ -103,12 +104,15 @@
         }
 
         p{
-          background-color: rgba(17 ,25,40,0.3);
+          /* background-color: rgba(17 ,25,40,0.3); */
+          background-color: #51fe858e ;
           border-radius: 10px;
           padding: 10px;
         }
+
         span{
           font-size: 14px;
+          color: #a5a5a5a8;  
           
         }
       }
