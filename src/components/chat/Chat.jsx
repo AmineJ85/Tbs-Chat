@@ -14,7 +14,7 @@ const Chat = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState({
     file: null,
-    urm: "",
+    url: "",
   });
 
   const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, } = useChatStore();
@@ -27,8 +27,11 @@ const Chat = () => {
   };
   const endRef = useRef(null)
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+    // const timeoutId = setTimeout(() => {
+    endRef.current?.scrollIntoView({ block: "end", behavior: "auto" });
+    // }, 400);
+    // return () => clearTimeout(timeoutId);
+  }, [chat]);
 
   useEffect(() => {
     const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
@@ -100,7 +103,12 @@ const Chat = () => {
       setText("");
     }
   };
-
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // Prevent default behavior of Enter key
+      handleSend(); // Call handleSend function to send the message
+    }
+  };
 
   return (
     <div className="chat">
@@ -144,20 +152,23 @@ const Chat = () => {
         <div className="icons">
           <label htmlFor="file">
             <img src="./img.png" alt="" />
+            <input type="file" id="file" style={{ display: "none" }} onClick={handleImg} />
           </label>
-          <input type="file" id="file" style={{ display: "none" }} onClick={handleImg} />
           <img src="./camera.png" alt="" />
           <img src="./mic.png" alt="" />
         </div>
         <input
           type="text"
+
           placeholder={
             isCurrentUserBlocked || isReceiverBlocked
               ? "you cannot send a message"
               : "Type a message..."}
           value={text}
           onChange={e => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
           disabled={isCurrentUserBlocked || isReceiverBlocked}
+
         />
         <div className="emoji">
           <img
