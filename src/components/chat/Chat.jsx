@@ -5,13 +5,18 @@ import { arrayUnion, doc, getDoc, onSnapshot, updateDoc } from "firebase/firesto
 import { db } from "../../lib/firebase"
 import { useChatStore } from "../../lib/chatStore"
 import { useUserStore } from "../../lib/userStore"
+import upload from "../../lib/upload"
 
 const Chat = () => {
   const [chat, setChat] = useState();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const [img, setImg] = useState({
+    file: null,
+    urm: "",
+  });
 
-  const { chatId, user } = useChatStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked, } = useChatStore();
   const { currentUser } = useUserStore();
 
 
@@ -34,15 +39,31 @@ const Chat = () => {
   }, [chatId]);
 
 
+  const handleImg = (e) => {
+    if (e.target.files[0]) {
+
+      setImg({
+        file: e.target.files[0],
+        url: URL.createObjectURL(e.target.files[0]),
+      });
+    }
+  };
+
+
   const handleSend = async () => {
     if (text === "") return;
+    let imgurl = null;
 
     try {
+      if (img.file) {
+        imgurl = await upload(img.file);
+      }
       await updateDoc(doc(db, "chats", chatId), {
         messages: arrayUnion({
           senderId: currentUser.id,
           text,
           createdAt: new Date(),
+          ...(imgurl && { img: imgurl }),
         }),
       });
 
@@ -69,15 +90,22 @@ const Chat = () => {
       console.log(error);
     }
 
+    setImg({
+      file: null,
+      url: "",
+    });
+    setText("");
+
   };
+
 
   return (
     <div className="chat">
       <div className="top">
         <div className="user">
-          <img src="./avatar.png" alt="" />
+          <img src={user?.avatar || "./avatar.png"} alt="" />
           <div className="texts">
-            <span>Nizar Jouini</span>
+            <span>{user?.username}</span>
             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit,</p>
           </div>
         </div>
@@ -89,7 +117,7 @@ const Chat = () => {
       </div>
       <div className="center">
         {chat?.messages?.map((message =>
-          <div className="message own" key={message?.createdAt}>
+          <div className={message.senderId === currentUser?.id ? "message own" : "message"} key={message?.createdAt}>
             <div className="texts">
               {message.img && <img
                 src={message.img}
@@ -101,21 +129,35 @@ const Chat = () => {
               {/* <span>{message.createdAt}</span> */}
             </div>
           </div>
-        ))
-        }
+        ))}
+        {img.url && (
+          <div className="message own">
+            <div className="texts">
+              <img src={img.url} alt="" />
+            </div>
+          </div>
+        )}
         <div ref={endRef}></div>
       </div>
       <div className="bottom">
         <div className="icons">
-          <img src="./img.png" alt="" />
+          <label htmlFor="file">
+            <img src="./img.png" alt="" />
+          </label>
+          <input type="file" id="file" style={{ display: "none" }} onClick={handleImg} />
           <img src="./camera.png" alt="" />
           <img src="./mic.png" alt="" />
         </div>
         <input
           type="text"
-          placeholder="Type a message..."
+          placeholder={
+            isCurrentUserBlocked || isReceiverBlocked
+              ? "you cannot send a message"
+              : "Type a message..."}
           value={text}
-          onChange={e => setText(e.target.value)} />
+          onChange={e => setText(e.target.value)}
+          disabled={isCurrentUserBlocked || isReceiverBlocked}
+        />
         <div className="emoji">
           <img
             src="./emoji.png"
@@ -126,7 +168,10 @@ const Chat = () => {
             <EmojiPicker open={open} onEmojiClick={handleEmoji} />
           </div>
         </div>
-        <button className="sendButton" onClick={handleSend}>Send</button>
+        <button className="sendButton" onClick={handleSend}
+          disabled={isCurrentUserBlocked || isReceiverBlocked}>
+          Send
+        </button>
       </div>
     </div>
   )
